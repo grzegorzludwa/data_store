@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "data_store"
+version = "0.1.0"
+description = ""
+authors = ["Ludwa Grzegorz EXT FRD Spyrosoft <grzegorz.ludwa.external@zf.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+click = "^8.0.4"
+conan = "^1.45.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+data_store = "data_store.cli:cli"
+
