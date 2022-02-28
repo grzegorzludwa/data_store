@@ -24,10 +24,11 @@ def cmake(ctx, local_conan_cache):
 
 
 @cmake.command()
+@click.argument("reference", required=False, type=str)
 @click.pass_context
-def install(ctx):
+def install(ctx, reference):
     cmake = ctx.obj
-    cmake.install()
+    cmake.install(reference)
 
 
 @cmake.command(context_settings=dict(

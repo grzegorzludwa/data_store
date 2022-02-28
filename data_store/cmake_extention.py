@@ -7,32 +7,34 @@ class CmakeExtension(ConanExtension):
     def __init__(self, local_conan_cache: bool, name: str, datastore_root_folder: Path) -> None:
         super().__init__(local_conan_cache, name, datastore_root_folder)
 
+    @property
     def default_config(self):
         config = {
-            "conan_reference": "cmake/3.22.0@",
+            "package": "cmake/3.22.0@",
             "run_cmd": "cmake",
         }
         return config
 
-    def install(self, reference: str = None):
-        # possible additional steps when run in ZF environment
-        # curl -O https://repo-manager.emea.zf-world.com:443/artifactory/conan-config-frd/1.0.0/conan-config-xsteps.zip
-        # conan config install conan-config-xsteps.zip
-        # conan user add -p password -r remotes
+    def install(self, package: str = None):
+        if not package:
+            package = self.config["package"]
 
-        if not self.installed:
-            subprocess.run(f"conan install cmake/3.22.0@ -g virtualenv -if {self.datastore.path}", shell=True)
-            self.installed = True
+        if not self.is_installed(package):
+            if not self.check_if_exists(package):
+                print(f"ERROR! Your package: {package} could not be found in remotes.")
+                return
+            subprocess.run(f"conan install {package} -g virtualenv -if {self.datastore.path}", shell=True)
+            self.config["package"] = package
             self.config["uses_envs"] = True
-            self.config["run_cmd"] = "cmake" # should be also moved as ExternsionCore property (same as installed)
+            self.config["run_cmd"] = "cmake"
             self.datastore.save_config(self.config)
         else:
             print("CMake already installed")
 
 
     def execute(self, cmdline_options: list):
-        if not self.installed:
-            print("CMake package is not installed")
+        if not self.is_installed(self.config["package"]):
+            print("CMake package is not installed. Run \"install\" command first.")
             return
 
         if self.config["uses_envs"]:
