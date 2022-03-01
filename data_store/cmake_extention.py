@@ -1,4 +1,6 @@
+import logging
 from pathlib import Path
+from typing import Union
 import subprocess
 
 from .extension import ConanExtension
@@ -15,31 +17,32 @@ class CmakeExtension(ConanExtension):
         }
         return config
 
-    def install(self, package: str = None):
+    def install(self, package: Union[str, None] = None):
         if not package:
             package = self.config["package"]
 
         if not self.is_installed(package):
             if not self.check_if_exists(package):
-                print(f"ERROR! Your package: {package} could not be found in remotes.")
-                return
-            subprocess.run(f"conan install {package} -g virtualenv -if {self.datastore.path}", shell=True)
-            self.config["package"] = package
-            self.config["uses_envs"] = True
-            self.config["run_cmd"] = "cmake"
-            self.datastore.save_config(self.config)
+                logging.error(f"Your package: {package} could not be found in remotes.")
+            else :
+                subprocess.run(f"conan install {package} -g virtualenv -if {self.datastore.path}", shell=True) # TODO: Use conan api from xsteps here
+                self.config["package"] = package
+                self.config["uses_envs"] = True
+                self.config["run_cmd"] = "cmake"
+                self.datastore.save_config(self.config)
         else:
-            print("CMake already installed")
+            logging.warning(f"{package} already installed.")
 
 
     def execute(self, cmdline_options: list):
-        if not self.is_installed(self.config["package"]):
-            print("CMake package is not installed. Run \"install\" command first.")
+        package = self.config["package"]
+        if not self.is_installed(package):
+            logging.warning(f"{package} is not installed. Run \"install\" command first.")
             return
 
         if self.config["uses_envs"]:
             self.load_env_file()
 
         cmd = [self.config["run_cmd"]] + cmdline_options
-        print("Executing CMake command:", cmd)
+        logging.debug("Executing command:", cmd)
         subprocess.run(cmd)

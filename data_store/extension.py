@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from conans.client.conan_api import Conan
 from conans.errors import InvalidNameException, RecipeNotFoundException
+import logging
 import os
 from pathlib import Path
+import subprocess
 from typing import List
 
 from .data_store import DataStore
@@ -13,11 +15,11 @@ class ExtensionCore(ABC):
         try:
             self._config = self._datastore.get_config()
         except FileNotFoundError:
-            print(f"Warning: Could not find config file: {self.datastore.configfile}.")
-            print("Creating default one...")
+            logging.warning(f"Could not find config file: {self.datastore.configfile}.")
+            logging.warning("Creating default one...")
             self.datastore.save_config(self.default_config)
             self._config = self.default_config
-            print(f"Default config file created: {self.datastore.configfile}")
+            logging.info(f"Default config file created: {self.datastore.configfile}")
 
     @property
     def datastore(self) -> DataStore:
@@ -51,7 +53,7 @@ class ConanExtension(ExtensionCore):
         self._conan_cache_in_datastore = conan_cache_in_datastore
         if self._conan_cache_in_datastore:
             os.environ["CONAN_USER_HOME"] = str(datastore_root_folder.resolve())
-            print("CONAN_USER_HOME:", os.environ.get("CONAN_USER_HOME"))
+            logging.debug("CONAN_USER_HOME: %s", os.environ.get("CONAN_USER_HOME"))
 
         self.conan_app = Conan()
         self.conan_app.create_app()
@@ -59,12 +61,11 @@ class ConanExtension(ExtensionCore):
 
     def _setup_conan(self):
         self._remote_names = ["conancenter"]
-        # TODO: create this method
+        # TODO: fill this method
         # possible additional steps when run in ZF environment
         # curl -O https://repo-manager.emea.zf-world.com:443/artifactory/conan-config-frd/1.0.0/conan-config-xsteps.zip
         # conan config install conan-config-xsteps.zip
         # conan user add -p password -r remotes
-        pass
 
     def available_remote_packages(self, search_pattern: str, remotes: List[str]) -> list:
         available_packages = []
@@ -72,7 +73,7 @@ class ConanExtension(ExtensionCore):
             try:
                 remote_results = self.conan_app.search_packages(search_pattern, remotes)["results"]
             except RecipeNotFoundException:
-                print(f"Warning! Could not find any package matching pattern: {search_pattern} in remote: {remote}.")
+                logging.debug(f"Could not find any package matching pattern: {search_pattern} in remote: {remote}.")
             else:
                 for result in remote_results:
                     available_packages += [item["recipe"]["id"] for item in result["items"]]
