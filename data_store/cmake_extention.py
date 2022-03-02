@@ -25,6 +25,10 @@ class CmakeExtension(ConanExtension):
             logging.error("Please provide valid conan package reference")
             return
 
+        # TODO: Remove this quickfix
+        if "@" not in package:
+            package += "@"
+
         if not self.is_installed(package):
             if not self.check_in_remotes(package):
                 logging.error(f"Your package: {package} could not be found in remotes.")

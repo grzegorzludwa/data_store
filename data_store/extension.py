@@ -112,3 +112,7 @@ class ConanExtension(ExtensionCore):
                     os.environ[env_var] = os.pathsep.join([os.path.join(path), os.environ['PATH']])
                 else:
                     os.environ[env_var] = path
+
+    def _install(self, package: str, install_folder: Path, use_virtualenv_generator: bool = True):
+        # TODO: implement it
+        pass
