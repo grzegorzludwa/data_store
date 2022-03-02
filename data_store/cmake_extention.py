@@ -21,14 +21,17 @@ class CmakeExtension(ConanExtension):
         if not package:
             package = self.config["package"]
 
+        if not self.is_valid_pkg_reference(package):
+            logging.error("Please provide valid conan package reference")
+            return
+
         if not self.is_installed(package):
-            if not self.check_if_exists(package):
+            if not self.check_in_remotes(package):
                 logging.error(f"Your package: {package} could not be found in remotes.")
             else :
                 subprocess.run(f"conan install {package} -g virtualenv -if {self.datastore.path}", shell=True) # TODO: Use conan api from xsteps here
                 self.config["package"] = package
                 self.config["uses_envs"] = True
-                self.config["run_cmd"] = "cmake"
                 self.datastore.save_config(self.config)
         else:
             logging.warning(f"{package} already installed.")
@@ -44,5 +47,5 @@ class CmakeExtension(ConanExtension):
             self.load_env_file()
 
         cmd = [self.config["run_cmd"]] + cmdline_options
-        logging.debug("Executing command:", cmd)
+        logging.debug(f"Executing command: {cmd}")
         subprocess.run(cmd)

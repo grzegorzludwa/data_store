@@ -13,7 +13,7 @@ def cli(ctx, datastore):
     # ctx.ensure_object(dict)
     root_datastore = DataStore("", datastore)
     ctx.obj = root_datastore
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
 
 # TODO: ??? Create pass context decorator for DataStore and ExtensionCore ???

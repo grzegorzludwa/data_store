@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from conans.client.conan_api import Conan
-from conans.errors import InvalidNameException, RecipeNotFoundException
+from conans.errors import RecipeNotFoundException
 import logging
 import os
 from pathlib import Path
-import subprocess
+import re
 from typing import List
 
 from .data_store import DataStore
@@ -70,18 +70,24 @@ class ConanExtension(ExtensionCore):
     def available_remote_packages(self, search_pattern: str, remotes: List[str]) -> list:
         available_packages = []
         for remote in remotes:
-            try:
-                remote_results = self.conan_app.search_packages(search_pattern, remotes)["results"]
-            except RecipeNotFoundException:
-                logging.debug(f"Could not find any package matching pattern: {search_pattern} in remote: {remote}.")
-            else:
-                for result in remote_results:
-                    available_packages += [item["recipe"]["id"] for item in result["items"]]
+            remote_results = self.conan_app.search_recipes(search_pattern, remote_name=remote)["results"]
+            for result in remote_results:
+                available_packages += [item["recipe"]["id"] for item in result["items"]]
 
         return available_packages
 
-    def check_if_exists(self, package: str) -> bool:
-        return package in self.available_remote_packages(package, self._remote_names)
+    def check_in_remotes(self, package: str) -> bool:
+        for available_package in self.available_remote_packages(package, self._remote_names):
+            # available_package does not contains "@" sign at the end
+            if package.startswith(available_package):
+                return True
+
+        return False
+
+    @staticmethod
+    def is_valid_pkg_reference(reference: str) -> bool:
+        regex_pattern = r"^\w[a-zA-Z0-9_\+\.-]{1,50}\/(\w+)(\.\w+){0,2}"
+        return bool(re.match(regex_pattern, reference))
 
     def is_installed(self, package: str) -> bool:
         ret = False
